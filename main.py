@@ -1,8 +1,10 @@
-import gradio as gr
+
 import os
 import logging
+import gradio as gr
 from dotenv import load_dotenv
 import interfaces.login as login_interface
+import interfaces.patient as patientlist_interface
 
 # Main function
 def main():
@@ -53,8 +55,10 @@ def setup_main_interface(css):
     logging.info("Setting up interface")
     with gr.Blocks(css=css, theme=gr.themes.Soft(primary_hue="blue",
                                                  secondary_hue="blue")) as demo:
-        login_interface.setup()
-    
+        login_col = gr.Column(elem_id="userinput", visible=True)
+        patient_col = gr.Column(elem_id="patient", visible=False)
+        login_interface.setup(login_col, patient_col)
+        patientlist_interface.setup(patient_col)
     return demo
 
 main()

@@ -5,11 +5,12 @@ WORKDIR /usr/src/app
 
 
 # Copy local code to the container image.
-COPY . ./
+COPY scripts ./scripts
+COPY interfaces ./interfaces
+COPY requirements.txt main.py .env ./
 
 # Install dependencies.
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Exposed for SSL through aws
 EXPOSE 443
