@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     name: deployment
+    permissions: write-all
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     steps:
