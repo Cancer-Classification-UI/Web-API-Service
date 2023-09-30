@@ -1,0 +1,25 @@
+name: Web API Workflow
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: deployment
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+    
+    - name: Push To Registry
+      uses: mr-smithers-excellent/docker-build-push@v6
+      with:
+        image: ghcr.io/Cancer-Classification-UI/Docker-Images/ccu-web-api
+        tags: latest
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GHCR_TOKEN }}
