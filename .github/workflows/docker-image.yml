@@ -18,7 +18,7 @@ jobs:
     - name: Push To Registry
       uses: mr-smithers-excellent/docker-build-push@v6
       with:
-        image: Docker-Images/ccu-web-api
+        image: docker-images/ccu-web-api
         tags: latest
         registry: ghcr.io
         username: ${{ github.actor }}
