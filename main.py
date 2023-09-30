@@ -1,10 +1,8 @@
-
 import os
 import logging
 import gradio as gr
 from dotenv import load_dotenv
-import interfaces.login as login_interface
-import interfaces.patient as patientlist_interface
+import interfaces as interfaces
 
 # Main function
 def main():
@@ -46,19 +44,34 @@ def setup_logging():
     logging.info("STARTING LOG...")
     logging.info("LOG_LEVEL: " + logging.getLevelName(numeric_level))
 
+
 def setup_main_interface(css):
     """
     Setup the main interface
-    :param css: css string
+
+    Parameters:
+    css (str): The css to apply to the interface
     """
 
     logging.info("Setting up interface")
     with gr.Blocks(css=css, theme=gr.themes.Soft(primary_hue="blue",
                                                  secondary_hue="blue")) as demo:
+        # Setup columns
         login_col = gr.Column(elem_id="userinput", visible=True)
-        patient_col = gr.Column(elem_id="patient", visible=False)
-        login_interface.setup(login_col, patient_col)
-        patientlist_interface.setup(patient_col)
+        patient_col = gr.Column(visible=False)
+        acc_creation_col = gr.Column(visible=False)
+        forgot_passwd_col = gr.Column(visible=False)
+
+        # Setup interfaces
+        interfaces.login.setup(login_col, 
+                               patient_col,
+                               acc_creation_col, 
+                               forgot_passwd_col)
+        interfaces.patient.setup(patient_col)
+        interfaces.accountcreate.setup(acc_creation_col)
+        interfaces.forgotpassword.setup(forgot_passwd_col)
+        logging.info("Interface setup complete")
     return demo
+
 
 main()

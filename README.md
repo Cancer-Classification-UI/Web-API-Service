@@ -66,7 +66,7 @@ touch log.txt
 ```
 Then run the docker image
 ```bash
-./start.sh
+./scripts/start.sh
 ```
 or manually with
 ```bash
@@ -82,4 +82,28 @@ docker run -d -e GRADIO_SERVER_NAME=0.0.0.0 -p $(cat .env | grep APP_PORT | cut 
 python main.py
 ```
 </details>
+
+### View Docker terminal or unmounted files
+If you launched the container using docker, you can execute a sh terminal inside the container to gain access to it and browse around.
+```bash
+docker exec -it web-api /bin/sh
+```
+>Leave the shell with `Ctrl+D`
+
+If you want to see the actual go service (the console the `go run ccu` command produces) then
+```bash
+docker attach web-api
+```
+> Be careful as it hard to detach as the key bind `Ctrl+P then Ctrl+D` is often used by many programs, so you may not be able to detach correctly.
+
+### Shutting down docker container
+If you want to fully shutdown the container
+```bash
+./scripts/stop.sh
+```
+or manually with
+```bash
+docker kill web-api
+docker rm web-api
+```
 
