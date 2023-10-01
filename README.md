@@ -1,4 +1,6 @@
 # Web API Service
+[![Web API Image Deployment](https://github.com/Cancer-Classification-UI/Web-API-Service/actions/workflows/docker-image.yml/badge.svg?branch=main)](https://github.com/Cancer-Classification-UI/Web-API-Service/actions/workflows/docker-image.yml)
+
 This service is responsible for the web interface. Interfaces with all backend API's to facilitate interface logic.
 
 This service will most likely not have an API and wont be used. The web interface can be found at
