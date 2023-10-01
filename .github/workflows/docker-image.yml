@@ -1,4 +1,4 @@
-name: Web API Workflow
+name: Web API Image Deployment
 
 on:
   push:
