@@ -7,7 +7,7 @@ WORKDIR /usr/src/app
 # Copy local code to the container image.
 COPY scripts ./scripts
 COPY interfaces ./interfaces
-COPY requirements.txt main.py .env ./
+COPY requirements.txt main.py .en[v] ./
 
 # Install dependencies.
 RUN pip install --upgrade pip && pip install -r requirements.txt
