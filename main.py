@@ -15,6 +15,7 @@ def main():
     # Readin css
     with open("interfaces/main.css") as f:
         css = f.read()
+        f.close()
 
     demo = setup_main_interface(css)
 
@@ -38,7 +39,7 @@ def setup_logging():
         log_level = "info"
 
     # Convert log level to actual level
-    numeric_level = getattr(logging, log_level, None)
+    numeric_level = logging.getLevelName(log_level.upper())
     if not isinstance(numeric_level, int):
         logging.error('Invalid log level, defaulting to info')
         numeric_level = logging.INFO
