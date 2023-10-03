@@ -9,7 +9,7 @@ def main():
     print("Starting Login-API microservice...")
     print("No logs will be generated here. Please see log.txt file for logging")
 
-    load_dotenv()
+    load_dotenv() # Loads .env if present
     setup_logging()
 
     # Readin css
@@ -18,7 +18,12 @@ def main():
 
     demo = setup_main_interface(css)
 
-    demo.queue().launch(server_port=int(os.getenv("APP_PORT")), share=False)
+    port = os.getenv("APP_PORT") # Default to 8080   
+    if port is None:
+        logging.warning("APP_PORT not specified in env, default to 8080")
+        port = "8080"
+
+    demo.queue().launch(server_port=int(port), share=False)
 
 def setup_logging():
     """
@@ -29,7 +34,7 @@ def setup_logging():
     # Get log level from .env
     log_level = os.getenv("LOG_LEVEL")
     if log_level is None:
-        logging.warning("LOG_LEVEL not specified in .env, defaulting to info")
+        logging.warning("LOG_LEVEL not specified in env, defaulting to info")
         log_level = "info"
 
     # Convert log level to actual level
