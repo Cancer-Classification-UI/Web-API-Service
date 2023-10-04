@@ -7,7 +7,7 @@ echo "Clearing log file..."
 echo "Running image..."
 docker run -d -e GRADIO_SERVER_NAME=0.0.0.0 -e PYTHONUNBUFFERED=1 $(
 if [ -f "$SCRIPT_DIR/../.env" ]; then
-    cat "$SCRIPT_DIR/../.env" | grep "APP_PORT" | cut -d= -f2 | awk '{ print "-p "$1":"$1 }'
+    grep -oP 'APP_PORT=\K\d+' $SCRIPT_DIR/../.env | awk '{ print "-p "$1":"$1 }'
 else
     echo "-p 8080:8080"
 fi
