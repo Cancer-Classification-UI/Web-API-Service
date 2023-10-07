@@ -45,7 +45,7 @@ def setup_logging():
         numeric_level = logging.INFO
 
     # Setup logging config
-    logging.basicConfig(filename='log.txt', level=numeric_level)
+    logging.basicConfig(filename='log.txt', level=numeric_level, force=True)
 
     logging.info("STARTING LOG...")
     logging.info("LOG_LEVEL: " + logging.getLevelName(numeric_level))
