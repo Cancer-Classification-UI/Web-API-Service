@@ -19,10 +19,10 @@ def main():
 
     demo = setup_main_interface(css)
 
-    port = os.getenv("APP_PORT") # Default to 8080   
+    port = os.getenv("APP_PORT") # Default to 8082   
     if port is None:
-        logging.warning("APP_PORT not specified in env, default to 8080")
-        port = "8080"
+        logging.warning("APP_PORT not specified in env, default to 8082")
+        port = "8082"
 
     demo.queue().launch(server_port=int(port), share=False)
 
@@ -65,8 +65,8 @@ def setup_main_interface(css):
         # Setup columns
         login_col = gr.Column(elem_id="userinput", visible=True)
         patient_col = gr.Column(visible=False)
-        acc_creation_col = gr.Column(visible=False)
-        forgot_passwd_col = gr.Column(visible=False)
+        acc_creation_col = gr.Column(elem_id="userinput", visible=False)
+        forgot_passwd_col = gr.Column(elem_id="userinput", visible=False)
 
         # Setup interfaces
         interfaces.login.setup(login_col, 
@@ -74,8 +74,10 @@ def setup_main_interface(css):
                                acc_creation_col, 
                                forgot_passwd_col)
         interfaces.patient.setup(patient_col)
-        interfaces.accountcreate.setup(acc_creation_col)
-        interfaces.forgotpassword.setup(forgot_passwd_col)
+        interfaces.accountcreate.setup(acc_creation_col,
+                                       login_col)
+        interfaces.forgotpassword.setup(forgot_passwd_col,
+                                        login_col)
         logging.info("Interface setup complete")
     return demo
 

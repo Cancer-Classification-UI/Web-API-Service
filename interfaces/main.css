@@ -3,18 +3,37 @@
             flex-direction: column; 
             align-items: center; 
             justify-content: center;
-            height: 90vh;}
+            /* height: 90vh;} */}
 
 #linkbutton, 
-#linkbutton-left {width: auto;
+#linkbutton-left,
+#linkbutton-right {width: auto;
              background: none;
              color: var(--link-text-color);}
 
 #linkbutton-left {justify-content: flex-start;}
+#linkbutton-right {justify-content: flex-end;}
 
-#linkbutton:hover, #linkbutton-left:hover {color: var(--link-text-color-hover);}
+#linkbutton:hover, #linkbutton-left:hover, #leftbutton-right:hover {color: var(--link-text-color-hover);}
 
 #account-create-action {width: auto;
                        gap: 0px;}
+
+                       /* Chrome, Safari, Edge, Opera */
+#simplenum input[type="number"]::-webkit-outer-spin-button,
+#simplenum input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+  text-align: center;
+}
+
+/* Firefox */
+#simplenum input[type="number"] {
+  -moz-appearance: textfield;
+  text-align: center;
+}
+
+.main {flex-direction: row !important;
+       align-items: center;}
 
 footer {display: none !important}
