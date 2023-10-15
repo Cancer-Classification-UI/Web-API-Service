@@ -1,8 +1,10 @@
 import hashlib
 import logging
 import gradio as gr
+import interfaces as interfaces
 
-def setup(login_col, patient_col, acc_creation_col, forgot_passwd_col):
+
+def setup(login_col, patient_col, acc_creation_col, forgot_passwd_col, current_user, patient_refresh_flag):
     """
     Sets up the login interface with the given columns for account creation, password recovery, and patient view.
     
@@ -14,6 +16,7 @@ def setup(login_col, patient_col, acc_creation_col, forgot_passwd_col):
     """
     
     login_status = gr.State(False)
+
     with login_col:
         logging.debug("Setting up login interface")
         gr.Markdown("<h1 style=\"text-align: center; font-size: 48px;\">Log In</h1>")
@@ -47,13 +50,13 @@ def setup(login_col, patient_col, acc_creation_col, forgot_passwd_col):
     
     forgot_btn.click(lambda: (gr.update(visible=False), gr.update(visible=True)),
                     outputs=[login_col, forgot_passwd_col])
-        
+    
     login_btn.click(send_login_request, 
               inputs=[user_txt, passw_txt], 
-              outputs=login_status) \
+              outputs=[login_status, current_user]) \
              .then(swap_to_patient_view, 
              inputs=login_status, 
-             outputs=[login_col, patient_col])
+             outputs=[login_col, patient_col, patient_refresh_flag])
 
 
 def validate_input(user, passw):
@@ -90,7 +93,7 @@ def send_login_request(user, passw):
     user_elem, passw_elem = validate_input(user, passw)
 
     if (user_elem is not None) or (passw_elem is not None):
-        return False
+        return False, ""
 
     # Encrypt the password
     encrypted_passw = hashlib.sha256(passw.encode('utf-8')).hexdigest()
@@ -104,7 +107,9 @@ def send_login_request(user, passw):
     #     print("Login failed.")
 
     gr.Info("Login Successful")
-    return True
+
+    # Make sure to update doctor name 
+    return True, user
 
 
 def swap_to_patient_view(login_status):
@@ -116,4 +121,4 @@ def swap_to_patient_view(login_status):
     """
     if login_status:
         logging.debug("Swapping to patient view")
-        return gr.update(visible=False), gr.update(visible=True)
+        return gr.update(visible=False), gr.update(visible=True), gr.update(value=1)

@@ -16,6 +16,13 @@
 
 #linkbutton:hover, #linkbutton-left:hover, #leftbutton-right:hover {color: var(--link-text-color-hover);}
 
+#searchbutton {width: auto;
+               min-width: auto;}
+
+#searchbox {max-width: 30vw;}
+
+#patientheader {align-items: center;}
+
 #account-create-action {width: auto;
                        gap: 0px;}
 
@@ -26,6 +33,14 @@
   margin: 0;
   text-align: center;
 }
+
+/* Makes the sample row smaller */
+#tablerowfix .table-wrap {--cell-width-2: 100px !important; }
+
+#tablerowfix table {overflow-x: auto; }
+
+#iconbutton {min-width: min(52px,100%);}
+#iconbutton img {margin-right: 0px;}
 
 /* Firefox */
 #simplenum input[type="number"] {
