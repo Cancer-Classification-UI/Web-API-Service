@@ -1,5 +1,4 @@
 import logging
-import requests
 import gradio as gr
 import pandas as pd
 
@@ -12,16 +11,17 @@ def setup(patient_col, current_user, patient_refresh_flag):
     Parameters:
     patient_col (gradio.Column): The column to add the interface to
     """
+    # Setup patient list interface
     with patient_col:
+        backup_df = gr.State() # Backup dataframe for searching
 
-        backup_df = gr.State()
-
+        # Header
         with gr.Row(elem_id="patientheader"):
             gr.Markdown("<h1 style=\"font-size: 48px; margin-bottom:0px;\">Patients</h1>")
             doctor_name_md = gr.Markdown("<h3 style=\"text-align: right; margin-bottom:0px;\">Profile: </h3>", elem_id="doctorname")
 
+        # Patient list with search and refresh
         with gr.Row():
-            # gr.Button("", icon="./interfaces/resources/magnifying-glass-solid.svg", variant="secondary", elem_id="iconbutton", scale=0)
             refresh_btn = gr.Button("",
                                     icon="./interfaces/resources/arrows-rotate-solid.svg",
                                     variant="primary", 
@@ -57,6 +57,7 @@ def setup(patient_col, current_user, patient_refresh_flag):
 
 
         # Workaround for automatic stateful change (States dont have eventlistenrs)
+        # Event Handlers
         patient_refresh_flag.change(get_patient_data, 
                                inputs=current_user, 
                                outputs=[patient_data_df, backup_df])
@@ -77,14 +78,20 @@ def setup(patient_col, current_user, patient_refresh_flag):
         
         search_column_dropdown.select(update_placeholder_searchtxt, 
                                       outputs=search_txt)
-        
 
-    
-    # doctor_name_var.change(lambda name: gr.update(value="<h3 style=\"text-align: right; margin-bottom:0px;\">Profile: " + name + "</h3>", elem_id="doctorname"),
-    #                        inputs=doctor_name_var,
-    #                        outputs=doctor_name_md)
 
 def search_name(df, inp, col):
+    """
+    Search for a name in the patient list
+
+    Parameters:
+    df (pd.DataFrame): The dataframe to search
+    inp (str): The string to search for
+    col (str): The column to search in
+
+    Returns:
+    pd.DataFrame: The filtered dataframe
+    """
     result = df[df[col].str.contains(inp)]
     if result.empty:
         gr.Warning("No results found")
@@ -94,12 +101,41 @@ def search_name(df, inp, col):
 
 
 def update_placeholder_searchtxt(evt: gr.SelectData):
+    """
+    Update the placeholder text for the search textbox
+
+    Parameters:
+    evt (gr.SelectData): The event data from the dropdown
+
+    Returns:
+    gradio.Textbox: The textbox to update
+    """
     return gr.Textbox.update(placeholder="Search by " + evt.value)
 
+
 def update_doctor_name(name):
+    """
+    Update doctor name in patient list
+
+    Parameters:
+    name (str): The name of the doctor to update to
+
+    Returns:
+    gradio.Markdown: The markdown element to update
+    """
     return gr.Markdown.update(value="<h3 style=\"text-align: right; margin-bottom:0px;\">Profile: " + name + "</h3>")
 
+
 def get_patient_data(doctor_name):
+    """
+    Get patient data from server
+
+    Parameters:
+    doctor_name (str): The name of the doctor to get patient data for
+
+    Returns:
+    pd.DataFrame: The patient data
+    """
 
     # Get patients from server
     # Include some data about doctor, so we only get data for the logged in doctor

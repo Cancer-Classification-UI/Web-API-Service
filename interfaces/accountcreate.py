@@ -1,11 +1,13 @@
 import gradio as gr
 import logging
+
 def setup(acc_creation_col, login_col):
     """
     Setup the account creation interface
 
     Parameters:
     acc_creation_col (gradio.Column): The column to add the interface to
+    login_col (gradio.Column): The column to switch to when the cancel button is clicked
     """
     with acc_creation_col:
         logging.debug("Setting up account creation interface")
@@ -20,16 +22,17 @@ def setup(acc_creation_col, login_col):
         cancel_btn = gr.Button("Cancel", elem_id="linkbutton", variant="secondary", size="sm",)
         cancel_btn.click(reset, outputs=[login_col, acc_creation_col, user_email_txt, username_txt, passwd_txt, c_passwd_txt])
 
+
 def reset():
     """
     Resets the account creation page, and also all the inputs
     
     Returns:
-    login_col (gradio.Column): The column responsible for login
-    acc_creation_col (gradio.Column): The column responsible for account creation
-    user_email_txt (gradio.Textbox): The textbox responsible for the user's email
-    username_txt (gradio.Textbox): The textbox responsible for the user's username
-    passwd_txt (gradio.Textbox): The textbox responsible for the user's password
-    c_passwd_txt (gradio.Textbox): The textbox responsible for the user's password confirmation
+    gradio.Column: The column responsible for login
+    gradio.Column: The column responsible for account creation
+    gradio.Textbox: The textbox responsible for the user's email
+    gradio.Textbox: The textbox responsible for the user's username
+    gradio.Textbox: The textbox responsible for the user's password
+    gradio.Textbox: The textbox responsible for the user's password confirmation
     """
     return gr.update(visible=True), gr.update(visible=False), gr.update(value=None), gr.update(value=None), gr.update(value=None), gr.update(value=None)

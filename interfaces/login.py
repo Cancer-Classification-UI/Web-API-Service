@@ -3,7 +3,6 @@ import logging
 import gradio as gr
 import interfaces as interfaces
 
-
 def setup(login_col, patient_col, acc_creation_col, forgot_passwd_col, current_user, patient_refresh_flag):
     """
     Sets up the login interface with the given columns for account creation, password recovery, and patient view.
@@ -13,12 +12,17 @@ def setup(login_col, patient_col, acc_creation_col, forgot_passwd_col, current_u
     patient_col (gradio.Column): The column where the patient view will be displayed after successful login.
     acc_creation_col (gradio.Column): The column where the account creation interface will be displayed after clicking the "Create an account" button.
     forgot_passwd_col (gradio.Column): The column where the password recovery interface will be displayed after clicking the "Forgot Password?" button.
+    current_user (gradio.State): The state where the current user will be stored.
+    patient_refresh_flag (gradio.State): The state where the patient view's refresh flag will be stored.
     """
     
-    login_status = gr.State(False)
+    login_status = gr.State(False) # True if login successful, False otherwise
 
+    # Setup login interface
     with login_col:
         logging.debug("Setting up login interface")
+
+        # Header
         gr.Markdown("<h1 style=\"text-align: center; font-size: 48px;\">Log In</h1>")
         with gr.Row(elem_id="account-create-action"):
             gr.Markdown("""
@@ -35,6 +39,7 @@ def setup(login_col, patient_col, acc_creation_col, forgot_passwd_col, current_u
                                    variant="secondary", 
                                    size="sm")
     
+        # Login form
         user_txt = gr.Textbox(label="Username", max_lines=1)
         passw_txt = gr.Textbox(label="Password", max_lines=1, type="password")
 
@@ -44,6 +49,8 @@ def setup(login_col, patient_col, acc_creation_col, forgot_passwd_col, current_u
                                size="sm")
         login_btn = gr.Button("Login")
 
+
+    # Event handlers
     logging.debug("Setting up login interface callbacks")
     create_btn.click(lambda: (gr.update(visible=False), gr.update(visible=True)),
                      outputs=[login_col, acc_creation_col])
@@ -66,6 +73,10 @@ def validate_input(user, passw):
     Parameters:
     user (str): The username inputted by the user.
     passw (str): The password inputted by the user.
+
+    Returns:
+    gradio.Textbox: The username textbox.
+    gradio.Textbox: The password textbox.
     """
     user_elem, passw_elem = None, None
 
@@ -88,7 +99,11 @@ def send_login_request(user, passw):
 
     Parameters:
     user (str): The username inputted by the user.
-    passw (str): The password inputted by the user.
+    passw (str): The password inputted by the user.\
+    
+    Returns:
+    bool: The login status.
+    str: The username.
     """
     user_elem, passw_elem = validate_input(user, passw)
 
@@ -117,7 +132,12 @@ def swap_to_patient_view(login_status):
     Toggle visibility of the login interface
 
     Parameters:
-    login_status (bool): The login status of the user.
+    login_status (bool): The login status returned from the login request.
+
+    Returns:
+    gradio.Column: The login column.
+    gradio.Column: The patient view column.
+    gradio.Column: The patient view column's refresh flag.
     """
     if login_status:
         logging.debug("Swapping to patient view")
