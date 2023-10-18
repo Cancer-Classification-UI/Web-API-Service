@@ -15,6 +15,11 @@ def setup(patient_col,
 
     Parameters:
     patient_col (gradio.Column): The column to add the interface to
+    current_user (gradio.State): The state to get the current user from
+    patient_refresh_flag (gradio.Number): The flag to refresh the patient list
+    classification_col (gradio.Column): The column to switch to when a patient is selected
+    current_patient_data_df (gradio.Dataframe): The dataframe to update when a patient is selected
+    classification_refresh_flag (gradio.Number): The flag to refresh the classification view
     """
     # Setup patient list interface
     with patient_col:
@@ -32,11 +37,13 @@ def setup(patient_col,
                                     variant="primary", 
                                     elem_id="iconbutton", 
                                     scale=0)
+            
             search_btn = gr.Button("",
                                    icon="./interfaces/resources/magnifying-glass-solid.svg",
                                    variant="primary", 
                                    elem_id="iconbutton", 
                                    scale=0)
+            
             search_txt = gr.Textbox(placeholder="Search by Name", 
                                      show_label=False, 
                                      show_copy_button=False, 
@@ -46,12 +53,14 @@ def setup(patient_col,
                                      container=False, 
                                      interactive=True, 
                                      elem_id="searchbox")
+            
             search_column_dropdown = gr.Dropdown(value=column_names[0], 
                                                  choices=column_names, 
                                                  interactive=True,
                                                  show_label=False,
                                                  container=False,
                                                  scale=0)
+        
         with gr.Row():
             patient_data_df = gr.Dataframe(
                 headers=column_names,
@@ -60,18 +69,15 @@ def setup(patient_col,
                 elem_id="tablerowfix"
             )
 
-
         # Workaround for automatic stateful change (States dont have eventlistenrs)
         # Event Handlers
         patient_refresh_flag.change(get_patient_data, 
                                inputs=current_user, 
                                outputs=[patient_data_df, backup_df])
         
-        
         patient_refresh_flag.change(update_doctor_name,
                                     inputs=current_user,
                                     outputs=doctor_name_md)
-        
 
         refresh_btn.click(get_patient_data, 
                           inputs=current_user, 
@@ -146,7 +152,7 @@ def get_patient_data(doctor_name):
     doctor_name (str): The name of the doctor to get patient data for
 
     Returns:
-    pd.DataFrame: The patient data
+    pd.DataFrame: The patient data (twice)
     """
 
     # Get patients from server
@@ -161,6 +167,16 @@ def get_patient_data(doctor_name):
     return patients_df, patients_df
 
 def get_reference_id_notes(reference_id):
+    """
+    Gets the notes for a specific reference id from the CDN service
+
+    Parameters:
+    reference_id (int): The reference id to get notes for
+
+    Returns:
+    str: The notes for the reference id
+    """
+
     # TODO REPLACE WITH CDN ENDPOINT FOR GETTING NOTES
     return "Assistant: Karen\nUser stated that the lesion was itchy and had been growing for the past 2 months. They seeked out advice from their faimly doctor Dr.Smith. Patient does not have insurance.\nPatient was reffered by Dr. Smith. at Altair Hospital."
 
@@ -168,9 +184,16 @@ def swap_to_classification_view(df, refresh_flag, evt: gr.SelectData):
     """
     Swap to the classification view
 
+    Parameters:
+    df (pd.DataFrame): The patient list dataframe
+    refresh_flag (gradio.Number): The refresh flag
+    evt (gr.SelectData): The event data from the patient list
+
     Returns:
     gradio.Column: The patient list column
     gradio.Column: The classification column
+    gradio.Dataframe: The dataframe to update
+    gradio.Number: The refresh flag to update
     """
 
     df = pd.DataFrame(df.iloc[[evt.index[0]]])

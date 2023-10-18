@@ -1,24 +1,42 @@
-import gradio as gr
 import logging
-import interfaces as interfaces
+import gradio as gr
 from PIL import Image
+import interfaces as interfaces
 
-def setup(classification_col, patient_col, current_patient_data_df, classification_refresh_flag):
+def setup(classification_col, 
+          patient_col, 
+          current_patient_data_df, 
+          classification_refresh_flag):
     """
     Setup the account creation interface
 
     Parameters:
     classification_col (gradio.Column): The column to add the interface to
+    patient_col (gradio.Column): The column to switch to when the cancel button is clicked
+    current_patient_data_df (gradio.Dataframe): The dataframe to update when a patient is selected
+    classification_refresh_flag (gradio.Number): The flag to refresh the classification view
     """
+
+    # Setup classification interface
     with classification_col:
         logging.debug("Setting up classification interface")
 
         sel_image_path = gr.State()
-        cancel_btn = gr.Button("X", elem_id="canelbutton", variant="secondary", size="sm", interactive=True)
 
+        # Setu up a cancel button so we can swap easily between patient and 
+        # classification view
+        cancel_btn = gr.Button("X", 
+                               elem_id="canelbutton", 
+                               variant="secondary", 
+                               size="sm", 
+                               interactive=True)
+
+        # Header
         with gr.Row():
             gr.Markdown("<h1 style=\"font-size: 48px;\">Cancer Classification</h1>")
+
         with gr.Row():
+            # Inputs, Patient data, and Reference data
             with gr.Column():
                 curr_patient_df = gr.Dataframe(max_rows=1)
                 notes_txt = gr.Textbox(label="Notes", 
@@ -28,32 +46,53 @@ def setup(classification_col, patient_col, current_patient_data_df, classificati
                                               columns=3)
                 submit_btn = gr.Button("Submit")
 
+            # Outputs
             with gr.Column():
-                attribution_img = gr.Image(label="Attribution", interactive=False)
-                output_label = gr.Label(label="Lesion Classification", num_top_classes=3)
+                attribution_img = gr.Image(label="Attribution", 
+                                           interactive=False)
+                output_label = gr.Label(label="Lesion Classification", 
+                                        num_top_classes=3)
 
+        # Setup event handlers
         classification_refresh_flag.change(lambda df: df.loc[:, df.columns != 'Notes'], 
                                            inputs=current_patient_data_df,
                                            outputs=curr_patient_df)
+        
         classification_refresh_flag.change(lambda df: df['Notes'][0], 
                                     inputs=current_patient_data_df,
                                     outputs=notes_txt)
+        
         classification_refresh_flag.change(get_reference_id_imgs,
                                            inputs=current_patient_data_df,
                                            outputs=reference_id_gal)
+        
         reference_id_gal.select(update_sel_img,
                                  inputs=reference_id_gal,
                                  outputs=sel_image_path)
+        
         submit_btn.click(classify,
                          inputs=sel_image_path,
                          outputs=[attribution_img, output_label])
         
-        cancel_btn.click(reset, outputs=[curr_patient_df, sel_image_path, attribution_img, output_label]) \
-                  .then(swap_to_patient_view, outputs=[patient_col, classification_col])
+        cancel_btn.click(reset, 
+                         outputs=[curr_patient_df, 
+                                  sel_image_path, 
+                                  attribution_img, 
+                                  output_label]) \
+                  .then(swap_to_patient_view, 
+                        outputs=[patient_col, classification_col])
         
 
 def get_reference_id_imgs(df):
+    """
+    Gets the reference images for the given patient
 
+    Parameters:
+    df (gradio.Dataframe): The dataframe containing the patient data
+
+    Returns:
+    list: The list of reference images, as PIL.Image objects
+    """
     logging.info("Getting reference images for" + str(df["Reference ID"]))
 
     # TODO, REPLACE WITH CDN ENDPOINT FOR GETTING IMAGES
@@ -66,9 +105,29 @@ def get_reference_id_imgs(df):
     return images
 
 def update_sel_img(imgs, evt: gr.SelectData):
+    """
+    Updates the selected image
+
+    Parameters:
+    imgs (list): The list of images to select from
+    evt (gr.SelectData): The event data from the gallery
+
+    Returns:
+    str: The path to the selected image
+    """
     return imgs[evt.index]['name']
 
 def classify(img_path):
+    """
+    Classifies the given image
+
+    Parameters:
+    img_path (str): The path to the image to classify
+
+    Returns:
+    PIL.Image: The attribution image to display
+    dict: The labels and their respective confidence intervals
+    """
     logging.info("Classifying image")
 
     if img_path is None:
@@ -90,7 +149,19 @@ def classify(img_path):
     return Image.open(img_path), labels
 
 def reset():
-    return gr.update(value=None), gr.update(value=None), gr.update(value=None), gr.update(value=None)
+    """
+    Resets the display and all the inputs
+
+    Returns:
+    gradio.Column: The column responsible for patient data
+    gradio.Column: The column responsible for classification
+    gradio.Dataframe: The dataframe responsible for patient data
+    gradio.Number: The flag to refresh the classification view
+    """
+    return gr.update(value=None), \
+           gr.update(value=None), \
+           gr.update(value=None), \
+           gr.update(value=None)
 
 def swap_to_patient_view():
     return gr.update(visible=True), gr.update(visible=False)
