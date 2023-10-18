@@ -4,7 +4,12 @@ import pandas as pd
 
 column_names = ["Name", "Reference ID", "Samples", "Date"]
 
-def setup(patient_col, current_user, patient_refresh_flag):
+def setup(patient_col, 
+          current_user, 
+          patient_refresh_flag, 
+          classification_col, 
+          current_patient_data_df, 
+          classification_refresh_flag):
     """
     Setup the patient list interface
 
@@ -78,6 +83,13 @@ def setup(patient_col, current_user, patient_refresh_flag):
         
         search_column_dropdown.select(update_placeholder_searchtxt, 
                                       outputs=search_txt)
+        
+        patient_data_df.select(swap_to_classification_view,
+                               inputs=[patient_data_df, classification_refresh_flag],
+                               outputs=[patient_col, 
+                                        classification_col, 
+                                        current_patient_data_df,
+                                        classification_refresh_flag])
 
 
 def search_name(df, inp, col):
@@ -147,3 +159,21 @@ def get_patient_data(doctor_name):
     patients_df = pd.DataFrame(raw_json)
     patients_df = patients_df.astype(str)
     return patients_df, patients_df
+
+def get_reference_id_notes(reference_id):
+    # TODO REPLACE WITH CDN ENDPOINT FOR GETTING NOTES
+    return "Assistant: Karen\nUser stated that the lesion was itchy and had been growing for the past 2 months. They seeked out advice from their faimly doctor Dr.Smith. Patient does not have insurance.\nPatient was reffered by Dr. Smith. at Altair Hospital."
+
+def swap_to_classification_view(df, refresh_flag, evt: gr.SelectData):
+    """
+    Swap to the classification view
+
+    Returns:
+    gradio.Column: The patient list column
+    gradio.Column: The classification column
+    """
+
+    df = pd.DataFrame(df.iloc[[evt.index[0]]])
+    df['Notes'] = get_reference_id_notes(df['Reference ID'])
+
+    return gr.update(visible=False), gr.update(visible=True), df, gr.update(value=False) if refresh_flag else gr.update(value=True)

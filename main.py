@@ -10,7 +10,7 @@ def main():
     print("Starting Login-API microservice...")
     print("No logs will be generated here. Please see log.txt file for logging")
 
-    load_dotenv() # Loads .env if present
+    load_dotenv(verbose=True, override=True) # Loads .env if present
     setup_logging()
 
     # Readin css
@@ -20,7 +20,7 @@ def main():
 
     demo = setup_main_interface(css)
 
-    port = os.getenv("APP_PORT") # Default to 8082   
+    port = os.getenv("APP_PORT") # Default to 8082
     if port is None:
         logging.warning("APP_PORT not specified in env, default to 8082")
         port = "8082"
@@ -66,25 +66,39 @@ def setup_main_interface(css):
         
         # Setup doctor name
         current_user = gr.State("")
+        current_patient_data_df = gr.Dataframe(visible=False)
+
         patient_refresh_flag = gr.Number(0, visible=False)
+        classification_refresh_flag = gr.Number(0, visible=False)
 
         # Setup columns
         login_col = gr.Column(elem_id="userinput", visible=True)
         patient_col = gr.Column(visible=False)
         acc_creation_col = gr.Column(elem_id="userinput", visible=False)
         forgot_passwd_col = gr.Column(elem_id="userinput", visible=False)
+        classification_col = gr.Column(visible=False)
 
         # Setup interfaces
-        interfaces.patient.setup(patient_col, current_user, patient_refresh_flag)
+        interfaces.patient.setup(patient_col, 
+                                 current_user, 
+                                 patient_refresh_flag, 
+                                 classification_col, 
+                                 current_patient_data_df,
+                                 classification_refresh_flag)
         interfaces.login.setup(login_col, 
                                patient_col,
                                acc_creation_col, 
                                forgot_passwd_col,
-                               current_user, patient_refresh_flag)
+                               current_user, 
+                               patient_refresh_flag)
         interfaces.accountcreate.setup(acc_creation_col,
                                        login_col)
         interfaces.forgotpassword.setup(forgot_passwd_col,
                                         login_col)
+        interfaces.classification.setup(classification_col,
+                                        patient_col,
+                                        current_patient_data_df,
+                                        classification_refresh_flag)
         logging.info("Interface setup complete")
     return demo
 
