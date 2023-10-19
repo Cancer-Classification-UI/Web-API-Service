@@ -122,6 +122,7 @@ def send_login_request(user, passw):
     #     print("Login failed.")
 
     gr.Info("Login Successful")
+    logging.info("Login successful for user: " + user)
 
     # Make sure to update doctor name 
     return True, user

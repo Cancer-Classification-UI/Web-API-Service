@@ -93,7 +93,7 @@ def get_reference_id_imgs(df):
     Returns:
     list: The list of reference images, as PIL.Image objects
     """
-    logging.info("Getting reference images for" + str(df["Reference ID"]))
+    logging.info("Getting reference images for: " + str(df["Reference ID"][0]))
 
     # TODO, REPLACE WITH CDN ENDPOINT FOR GETTING IMAGES
     images = [Image.open("./interfaces/resources/ISIC_0034525.jpg"),
@@ -134,6 +134,7 @@ def classify(img_path):
         raise gr.Error("Please select an image to classify")
     else:
         gr.Info("Classifiying image...")
+        logging.info("Classifiying image...")
 
     # TODO, REPLACE WITH CLASSIFICATION, only show top 3
     labels = {

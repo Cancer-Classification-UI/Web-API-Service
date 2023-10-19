@@ -66,7 +66,8 @@ def setup(patient_col,
                 headers=column_names,
                 datatype=["str", "number", "number", "date"],
                 col_count=(4, "fixed"),
-                elem_id="tablerowfix"
+                elem_id="tablerowfix",
+                interactive=False
             )
 
         # Workaround for automatic stateful change (States dont have eventlistenrs)
@@ -176,6 +177,7 @@ def get_reference_id_notes(reference_id):
     Returns:
     str: The notes for the reference id
     """
+    logging.debug("Getting notes for reference id: " + str(reference_id))
 
     # TODO REPLACE WITH CDN ENDPOINT FOR GETTING NOTES
     return "Assistant: Karen\nUser stated that the lesion was itchy and had been growing for the past 2 months. They seeked out advice from their faimly doctor Dr.Smith. Patient does not have insurance.\nPatient was reffered by Dr. Smith. at Altair Hospital."

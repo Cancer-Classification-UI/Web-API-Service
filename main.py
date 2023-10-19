@@ -25,7 +25,7 @@ def main():
         logging.warning("APP_PORT not specified in env, default to 8082")
         port = "8082"
 
-    demo.queue().launch(server_port=int(port), share=False)
+    demo.queue(api_open=False).launch(server_port=int(port), share=False, show_api=False)
 
 def setup_logging():
     """
