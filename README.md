@@ -9,7 +9,7 @@ This service will most likely not have an API and wont be used. The web interfac
 http://<ip>:<APP_PORT>
 ``` 
 
-If you are running locally it would be at [http://127.0.0.1:8080](http://127.0.0.1:8080)
+If you are running locally it would be at [http://127.0.0.1:8082](http://127.0.0.1:8082)
 
 # How to run
 
@@ -26,7 +26,7 @@ vim .env
 
 ### `.env` Template
 ```
-APP_PORT=8080 // Standard port for this microservice
+APP_PORT=8082 // Standard port for this microservice
 LOG_LEVEL=DEBUG
 ```
 > Additional fields will also be required in the `.env` file to run the microservice successfully. Here is a basic template of the `.env`. Customize to your liking. This template will change as the microservice matures and implements new features.
@@ -76,7 +76,7 @@ docker run -d -e GRADIO_SERVER_NAME=0.0.0.0 -e PYTHONUNBUFFERED=1 $(
 if [ -f "$SCRIPT_DIR/../.env" ]; then
     cat "$SCRIPT_DIR/../.env" | grep "APP_PORT" | cut -d= -f2 | awk '{ print "-p "$1":"$1 }'
 else
-    echo "-p 8080:8080"
+    echo "-p 8082:8082"
 fi
 ) -v $SCRIPT_DIR/../log.txt:/usr/src/app/log.txt --name web-api ccu-web-api
 ```

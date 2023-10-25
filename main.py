@@ -4,12 +4,13 @@ import gradio as gr
 from dotenv import load_dotenv
 import interfaces as interfaces
 
+
 # Main function
 def main():
     print("Starting Login-API microservice...")
     print("No logs will be generated here. Please see log.txt file for logging")
 
-    load_dotenv() # Loads .env if present
+    load_dotenv(verbose=True, override=True) # Loads .env if present
     setup_logging()
 
     # Readin css
@@ -19,12 +20,12 @@ def main():
 
     demo = setup_main_interface(css)
 
-    port = os.getenv("APP_PORT") # Default to 8082   
+    port = os.getenv("APP_PORT") # Default to 8082
     if port is None:
         logging.warning("APP_PORT not specified in env, default to 8082")
         port = "8082"
 
-    demo.queue().launch(server_port=int(port), share=False)
+    demo.queue(api_open=False).launch(server_port=int(port), share=False, show_api=False)
 
 def setup_logging():
     """
@@ -35,13 +36,13 @@ def setup_logging():
     # Get log level from .env
     log_level = os.getenv("LOG_LEVEL")
     if log_level is None:
-        logging.warning("LOG_LEVEL not specified in env, defaulting to info")
+        print("WARNING: LOG_LEVEL not specified in env, defaulting to info")
         log_level = "info"
 
     # Convert log level to actual level
     numeric_level = logging.getLevelName(log_level.upper())
     if not isinstance(numeric_level, int):
-        logging.error('Invalid log level, defaulting to info')
+        print('ERROR: Invalid log level, defaulting to info')
         numeric_level = logging.INFO
 
     # Setup logging config
@@ -62,22 +63,42 @@ def setup_main_interface(css):
     logging.info("Setting up interface")
     with gr.Blocks(css=css, theme=gr.themes.Soft(primary_hue="blue",
                                                  secondary_hue="blue")) as demo:
+        
+        # Setup doctor name
+        current_user = gr.State("")
+        current_patient_data_df = gr.Dataframe(visible=False)
+
+        patient_refresh_flag = gr.Number(0, visible=False)
+        classification_refresh_flag = gr.Number(0, visible=False)
+
         # Setup columns
         login_col = gr.Column(elem_id="userinput", visible=True)
         patient_col = gr.Column(visible=False)
         acc_creation_col = gr.Column(elem_id="userinput", visible=False)
         forgot_passwd_col = gr.Column(elem_id="userinput", visible=False)
+        classification_col = gr.Column(visible=False)
 
         # Setup interfaces
+        interfaces.patient.setup(patient_col, 
+                                 current_user, 
+                                 patient_refresh_flag, 
+                                 classification_col, 
+                                 current_patient_data_df,
+                                 classification_refresh_flag)
         interfaces.login.setup(login_col, 
                                patient_col,
                                acc_creation_col, 
-                               forgot_passwd_col)
-        interfaces.patient.setup(patient_col)
+                               forgot_passwd_col,
+                               current_user, 
+                               patient_refresh_flag)
         interfaces.accountcreate.setup(acc_creation_col,
                                        login_col)
         interfaces.forgotpassword.setup(forgot_passwd_col,
                                         login_col)
+        interfaces.classification.setup(classification_col,
+                                        patient_col,
+                                        current_patient_data_df,
+                                        classification_refresh_flag)
         logging.info("Interface setup complete")
     return demo
 

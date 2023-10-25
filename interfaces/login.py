@@ -1,8 +1,9 @@
 import hashlib
 import logging
 import gradio as gr
+import interfaces as interfaces
 
-def setup(login_col, patient_col, acc_creation_col, forgot_passwd_col):
+def setup(login_col, patient_col, acc_creation_col, forgot_passwd_col, current_user, patient_refresh_flag):
     """
     Sets up the login interface with the given columns for account creation, password recovery, and patient view.
     
@@ -11,11 +12,17 @@ def setup(login_col, patient_col, acc_creation_col, forgot_passwd_col):
     patient_col (gradio.Column): The column where the patient view will be displayed after successful login.
     acc_creation_col (gradio.Column): The column where the account creation interface will be displayed after clicking the "Create an account" button.
     forgot_passwd_col (gradio.Column): The column where the password recovery interface will be displayed after clicking the "Forgot Password?" button.
+    current_user (gradio.State): The state where the current user will be stored.
+    patient_refresh_flag (gradio.State): The state where the patient view's refresh flag will be stored.
     """
     
-    login_status = gr.State(False)
+    login_status = gr.State(False) # True if login successful, False otherwise
+
+    # Setup login interface
     with login_col:
         logging.debug("Setting up login interface")
+
+        # Header
         gr.Markdown("<h1 style=\"text-align: center; font-size: 48px;\">Log In</h1>")
         with gr.Row(elem_id="account-create-action"):
             gr.Markdown("""
@@ -32,6 +39,7 @@ def setup(login_col, patient_col, acc_creation_col, forgot_passwd_col):
                                    variant="secondary", 
                                    size="sm")
     
+        # Login form
         user_txt = gr.Textbox(label="Username", max_lines=1)
         passw_txt = gr.Textbox(label="Password", max_lines=1, type="password")
 
@@ -41,19 +49,21 @@ def setup(login_col, patient_col, acc_creation_col, forgot_passwd_col):
                                size="sm")
         login_btn = gr.Button("Login")
 
+
+    # Event handlers
     logging.debug("Setting up login interface callbacks")
     create_btn.click(lambda: (gr.update(visible=False), gr.update(visible=True)),
                      outputs=[login_col, acc_creation_col])
     
     forgot_btn.click(lambda: (gr.update(visible=False), gr.update(visible=True)),
                     outputs=[login_col, forgot_passwd_col])
-        
+    
     login_btn.click(send_login_request, 
               inputs=[user_txt, passw_txt], 
-              outputs=login_status) \
+              outputs=[login_status, current_user]) \
              .then(swap_to_patient_view, 
              inputs=login_status, 
-             outputs=[login_col, patient_col])
+             outputs=[login_col, patient_col, patient_refresh_flag])
 
 
 def validate_input(user, passw):
@@ -63,6 +73,10 @@ def validate_input(user, passw):
     Parameters:
     user (str): The username inputted by the user.
     passw (str): The password inputted by the user.
+
+    Returns:
+    gradio.Textbox: The username textbox.
+    gradio.Textbox: The password textbox.
     """
     user_elem, passw_elem = None, None
 
@@ -85,12 +99,16 @@ def send_login_request(user, passw):
 
     Parameters:
     user (str): The username inputted by the user.
-    passw (str): The password inputted by the user.
+    passw (str): The password inputted by the user.\
+    
+    Returns:
+    bool: The login status.
+    str: The username.
     """
     user_elem, passw_elem = validate_input(user, passw)
 
     if (user_elem is not None) or (passw_elem is not None):
-        return False
+        return False, ""
 
     # Encrypt the password
     encrypted_passw = hashlib.sha256(passw.encode('utf-8')).hexdigest()
@@ -104,7 +122,10 @@ def send_login_request(user, passw):
     #     print("Login failed.")
 
     gr.Info("Login Successful")
-    return True
+    logging.info("Login successful for user: " + user)
+
+    # Make sure to update doctor name 
+    return True, user
 
 
 def swap_to_patient_view(login_status):
@@ -112,8 +133,13 @@ def swap_to_patient_view(login_status):
     Toggle visibility of the login interface
 
     Parameters:
-    login_status (bool): The login status of the user.
+    login_status (bool): The login status returned from the login request.
+
+    Returns:
+    gradio.Column: The login column.
+    gradio.Column: The patient view column.
+    gradio.Column: The patient view column's refresh flag.
     """
     if login_status:
         logging.debug("Swapping to patient view")
-        return gr.update(visible=False), gr.update(visible=True)
+        return gr.update(visible=False), gr.update(visible=True), gr.update(value=1)
