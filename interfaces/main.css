@@ -9,7 +9,8 @@
 #linkbutton-left,
 #linkbutton-right {width: auto;
              background: none;
-             color: var(--link-text-color);}
+             color: var(--link-text-color);
+             box-shadow: none;}
 
 #linkbutton-left {justify-content: flex-start;}
 #linkbutton-right {justify-content: flex-end;}

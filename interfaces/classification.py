@@ -3,6 +3,8 @@ import gradio as gr
 from PIL import Image
 import interfaces as interfaces
 
+log = logging.getLogger('web-api')
+
 def setup(classification_col, 
           patient_col, 
           current_patient_data_df, 
@@ -19,7 +21,7 @@ def setup(classification_col,
 
     # Setup classification interface
     with classification_col:
-        logging.debug("Setting up classification interface")
+        log.debug("Setting up classification interface")
 
         sel_image_path = gr.State()
 
@@ -40,7 +42,7 @@ def setup(classification_col,
             with gr.Column():
                 curr_patient_df = gr.Dataframe(max_rows=1)
                 notes_txt = gr.Textbox(label="Notes", 
-                           max_lines=3, 
+                           max_lines=4, 
                            placeholder="No notes attached")
                 reference_id_gal = gr.Gallery(label="Dermoscopy Images", 
                                               columns=3)
@@ -93,7 +95,7 @@ def get_reference_id_imgs(df):
     Returns:
     list: The list of reference images, as PIL.Image objects
     """
-    logging.info("Getting reference images for: " + str(df["Reference ID"][0]))
+    log.info("Getting reference images for: " + str(df["Reference ID"][0]))
 
     # TODO, REPLACE WITH CDN ENDPOINT FOR GETTING IMAGES
     images = [Image.open("./interfaces/resources/ISIC_0034525.jpg"),
@@ -128,13 +130,13 @@ def classify(img_path):
     PIL.Image: The attribution image to display
     dict: The labels and their respective confidence intervals
     """
-    logging.info("Classifying image")
+    log.info("Classifying image")
 
     if img_path is None:
         raise gr.Error("Please select an image to classify")
     else:
         gr.Info("Classifiying image...")
-        logging.info("Classifiying image...")
+        log.info("Classifiying image...")
 
     # TODO, REPLACE WITH CLASSIFICATION, only show top 3
     labels = {

@@ -4,11 +4,11 @@ import gradio as gr
 from dotenv import load_dotenv
 import interfaces as interfaces
 
+log = logging.getLogger('web-api')
 
 # Main function
 def main():
     print("Starting Login-API microservice...")
-    print("No logs will be generated here. Please see log.txt file for logging")
 
     load_dotenv(verbose=True, override=True) # Loads .env if present
     setup_logging()
@@ -46,10 +46,15 @@ def setup_logging():
         numeric_level = logging.INFO
 
     # Setup logging config
-    logging.basicConfig(filename='log.txt', level=numeric_level, force=True)
+    log.setLevel(level=numeric_level)
+    fh = logging.StreamHandler()
+    fh_formatter = logging.Formatter('time=\"%(asctime)s\" level=%(levelname)s msg=\"%(message)s\"')
+    
+    fh.setFormatter(fh_formatter)
+    log.addHandler(fh)
 
-    logging.info("STARTING LOG...")
-    logging.info("LOG_LEVEL: " + logging.getLevelName(numeric_level))
+    log.info("STARTING LOG...")
+    log.info("LOG_LEVEL: " + logging.getLevelName(numeric_level))
 
 
 def setup_main_interface(css):
@@ -59,9 +64,9 @@ def setup_main_interface(css):
     Parameters:
     css (str): The css to apply to the interface
     """
-
-    logging.info("Setting up interface")
-    with gr.Blocks(css=css, theme=gr.themes.Soft(primary_hue="blue",
+    
+    log.info("Setting up interface")
+    with gr.Blocks(css=css, theme=interfaces.SoftCustom(primary_hue="blue",
                                                  secondary_hue="blue")) as demo:
         
         # Setup doctor name
@@ -99,7 +104,7 @@ def setup_main_interface(css):
                                         patient_col,
                                         current_patient_data_df,
                                         classification_refresh_flag)
-        logging.info("Interface setup complete")
+        log.info("Interface setup complete")
     return demo
 
 
