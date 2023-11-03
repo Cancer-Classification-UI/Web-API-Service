@@ -2,6 +2,7 @@ import logging
 import gradio as gr
 import pandas as pd
 
+log = logging.getLogger('web-api')
 column_names = ["Name", "Reference ID", "Samples", "Date"]
 
 def setup(patient_col, 
@@ -159,7 +160,7 @@ def get_patient_data(doctor_name):
     # Get patients from server
     # Include some data about doctor, so we only get data for the logged in doctor
     # patients = requests.get("http://localhost:8085/patients").json()
-    logging.debug("Getting patient data for doctor: " + doctor_name)
+    log.debug("Getting patient data for doctor: " + doctor_name)
 
     raw_json = {"Name":{"0":"John Doe","1":"Jane Doe","2":"Greg Smith","3":"Alice Smith","4":"John Johnson","5":"Jane Johnson","6":"Thomas Williams","7":"Nicole Williams","8":"John Brown","9":"Jane Brown","10":"Adam Jones","11":"Keith Jones","12":"Ian Miller","13":"Jane Miller","14":"John Davis","15":"Jane Davis","16":"John Garcia","17":"Jane Garcia","18":"John Rodriguez"},"Reference ID":{"0":1000,"1":1001,"2":1002,"3":1003,"4":1004,"5":1005,"6":1006,"7":1007,"8":1008,"9":1009,"10":1010,"11":1011,"12":1012,"13":1013,"14":1014,"15":1015,"16":1016,"17":1017,"18":1018},"Samples":{"0":1,"1":2,"2":3,"3":4,"4":5,"5":6,"6":7,"7":8,"8":9,"9":10,"10":11,"11":12,"12":13,"13":14,"14":15,"15":16,"16":17,"17":18,"18":19},"Date":{"0":"2021-01-01","1":"2021-01-01","2":"2021-01-01","3":"2021-01-01","4":"2021-01-01","5":"2021-01-01","6":"2021-01-01","7":"2021-01-01","8":"2021-01-01","9":"2021-01-01","10":"2021-01-01","11":"2021-01-01","12":"2021-01-01","13":"2021-01-01","14":"2021-01-01","15":"2021-01-01","16":"2021-01-01","17":"2021-01-01","18":"2021-01-01"}}
 
@@ -177,7 +178,7 @@ def get_reference_id_notes(reference_id):
     Returns:
     str: The notes for the reference id
     """
-    logging.debug("Getting notes for reference id: " + str(reference_id))
+    log.debug("Getting notes for reference id: " + str(reference_id))
 
     # TODO REPLACE WITH CDN ENDPOINT FOR GETTING NOTES
     return "Assistant: Karen\nUser stated that the lesion was itchy and had been growing for the past 2 months. They seeked out advice from their faimly doctor Dr.Smith. Patient does not have insurance.\nPatient was reffered by Dr. Smith. at Altair Hospital."

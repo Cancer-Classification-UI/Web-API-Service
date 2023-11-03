@@ -1,6 +1,8 @@
 import gradio as gr
 import logging
 
+log = logging.getLogger('web-api')
+
 def setup(acc_creation_col, login_col):
     """
     Setup the account creation interface
@@ -10,7 +12,7 @@ def setup(acc_creation_col, login_col):
     login_col (gradio.Column): The column to switch to when the cancel button is clicked
     """
     with acc_creation_col:
-        logging.debug("Setting up account creation interface")
+        log.debug("Setting up account creation interface")
         gr.Markdown("<h1 style=\"text-align: center; font-size: 48px;\">Create Account</h1>")
         gr.Markdown("<p style=\"text-align: center;\">Create an account by filling in info below.</p>")
         user_email_txt = gr.Textbox(label="Email", interactive=True, max_lines=1, value=None)

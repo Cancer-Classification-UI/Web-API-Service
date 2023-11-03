@@ -1,6 +1,8 @@
 import gradio as gr
 import logging
 
+log = logging.getLogger('web-api')
+
 def setup(forgot_passwd_col, login_col):
     """
     Setup the forgot password interface
@@ -12,7 +14,7 @@ def setup(forgot_passwd_col, login_col):
 
     # Setup forgot password interface
     with forgot_passwd_col:
-        logging.debug("Setting up forgot password interface")
+        log.debug("Setting up forgot password interface")
 
         # Setup inital forgot password interface
         initial_forgot_col = gr.Column(elem_id="userinput")

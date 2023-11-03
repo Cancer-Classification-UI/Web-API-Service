@@ -1,7 +1,11 @@
 import hashlib
 import logging
+import os
 import gradio as gr
+import requests
 import interfaces as interfaces
+
+log = logging.getLogger('web-api')
 
 def setup(login_col, patient_col, acc_creation_col, forgot_passwd_col, current_user, patient_refresh_flag):
     """
@@ -20,7 +24,7 @@ def setup(login_col, patient_col, acc_creation_col, forgot_passwd_col, current_u
 
     # Setup login interface
     with login_col:
-        logging.debug("Setting up login interface")
+        log.debug("Setting up login interface")
 
         # Header
         gr.Markdown("<h1 style=\"text-align: center; font-size: 48px;\">Log In</h1>")
@@ -51,7 +55,7 @@ def setup(login_col, patient_col, acc_creation_col, forgot_passwd_col, current_u
 
 
     # Event handlers
-    logging.debug("Setting up login interface callbacks")
+    log.debug("Setting up login interface callbacks")
     create_btn.click(lambda: (gr.update(visible=False), gr.update(visible=True)),
                      outputs=[login_col, acc_creation_col])
     
@@ -112,20 +116,38 @@ def send_login_request(user, passw):
 
     # Encrypt the password
     encrypted_passw = hashlib.sha256(passw.encode('utf-8')).hexdigest()
-    logging.debug('Sent login request: ' + 
-                 str({'username': user, 'password': encrypted_passw}))
+    print(encrypted_passw)
 
-    # response = requests.post('127.0.0.1:0804', data={'username': user, 'password': encrypted_passw})
-    # if response.status_code == 200:
-    #     print("Login successful!")
-    # else:
-    #     print("Login failed.")
+    # Get the login api address from env
+    address = os.getenv("LOGIN_API_ADDRESS")
+    if address is None:
+        print("WARNING: LOGIN_API_ADDRESS not specified in env, defaulting to 127.0.0.1:8084")
+        address = '127.0.0.1:8084'
 
-    gr.Info("Login Successful")
-    logging.info("Login successful for user: " + user)
+    # Send the login request
+    try:
+        log.debug("Sending login request: " + str(user) + ", " + str(encrypted_passw))
+        response = requests.get('http://' + address + '/api/v1/signin', 
+                            params={'username': user, 'password_hash': encrypted_passw})
+    except requests.exceptions.ConnectionError:
+        raise gr.Error("Login API connection error")
+    except Exception as e:
+        raise gr.Error("Login API error: " + str(e))
+    
+    # Extract data from response, and handle errors
+    success = False
+    if response.status_code == 200:
+        data = response.json()
+        success = bool(data.get('success'))
+        name = data.get('name')
+    else: # TODO Add more error handling
+        raise gr.Error("Login API response not ok: " + str(response))
+
+    # Inform user of login status
+    gr.Info("Login successful") if success else gr.Warning("Login unsuccessful")
 
     # Make sure to update doctor name 
-    return True, user
+    return success, name
 
 
 def swap_to_patient_view(login_status):
@@ -141,5 +163,7 @@ def swap_to_patient_view(login_status):
     gradio.Column: The patient view column's refresh flag.
     """
     if login_status:
-        logging.debug("Swapping to patient view")
+        log.debug("Swapping to patient view")
         return gr.update(visible=False), gr.update(visible=True), gr.update(value=1)
+    else:
+        return gr.update(visible=True), gr.update(visible=False), gr.update(value=0)

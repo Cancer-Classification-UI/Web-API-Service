@@ -62,10 +62,6 @@ pip install -r requirements.txt
 <summary><h3>With Docker</h3></summary>
 <br>
 
-Make sure you have a `log.txt` file in the repo directory, otherwise it wont be able to attach the log.txt and will give a warning and sometimes even an error
-```bash
-touch log.txt
-```
 Then run the docker image
 ```bash
 ./scripts/start.sh
@@ -78,7 +74,7 @@ if [ -f "$SCRIPT_DIR/../.env" ]; then
 else
     echo "-p 8082:8082"
 fi
-) -v $SCRIPT_DIR/../log.txt:/usr/src/app/log.txt --name web-api ccu-web-api
+) --name web-api ccu-web-api
 ```
 </details>
 
