@@ -124,25 +124,30 @@ def send_login_request(user, passw):
         print("WARNING: LOGIN_API_ADDRESS not specified in env, defaulting to 127.0.0.1:8084")
         address = '127.0.0.1:8084'
 
-    # Send the login request
-    try:
-        log.debug("Sending login request: " + str(user) + ", " + str(encrypted_passw))
-        response = requests.get('http://' + address + '/api/v1/signin', 
-                            params={'username': user, 'password_hash': encrypted_passw})
-    except requests.exceptions.ConnectionError:
-        raise gr.Error("Login API connection error")
-    except Exception as e:
-        raise gr.Error("Login API error: " + str(e))
-    
-    # Extract data from response, and handle errors
-    success = False
-    if response.status_code == 200:
-        data = response.json()
-        success = bool(data.get('success'))
-        name = data.get('name')
-    else: # TODO Add more error handling
-        raise gr.Error("Login API response not ok: " + str(response))
+    if (address == 'None'):
+        log.warning("Bypassing login API")
+    else:
+        # Send the login request
+        try:
+            log.debug("Sending login request: " + str(user) + ", " + str(encrypted_passw))
+            response = requests.get('http://' + address + '/api/v1/signin', 
+                                params={'username': user, 'password_hash': encrypted_passw})
+        except requests.exceptions.ConnectionError:
+            raise gr.Error("Login API connection error")
+        except Exception as e:
+            raise gr.Error("Login API error: " + str(e))
+        
+        # Extract data from response, and handle errors
+        success = False
+        if response.status_code == 200:
+            data = response.json()
+            success = bool(data.get('success'))
+            name = data.get('name')
+        else: # TODO Add more error handling
+            raise gr.Error("Login API response not ok: " + str(response))
 
+    success = True
+    name = 'Admin'
     # Inform user of login status
     gr.Info("Login successful") if success else gr.Warning("Login unsuccessful")
 

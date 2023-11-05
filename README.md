@@ -111,3 +111,6 @@ docker kill web-api
 docker rm web-api
 ```
 
+### Bypassing API's
+If you want to bypass an API call, set its respective `.env` address to `None` in the `.env`.
+

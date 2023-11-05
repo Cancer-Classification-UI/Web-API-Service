@@ -132,7 +132,6 @@ def update_placeholder_searchtxt(evt: gr.SelectData):
     """
     return gr.Textbox.update(placeholder="Search by " + evt.value)
 
-
 def update_doctor_name(name):
     """
     Update doctor name in patient list

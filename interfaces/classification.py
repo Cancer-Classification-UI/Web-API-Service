@@ -2,8 +2,10 @@ import logging
 import gradio as gr
 from PIL import Image
 import interfaces as interfaces
+from transformers import pipeline
 
 log = logging.getLogger('web-api')
+pipe = pipeline("image-classification", model="gianlab/swin-tiny-patch4-window7-224-finetuned-skin-cancer")
 
 def setup(classification_col, 
           patient_col, 
@@ -40,7 +42,7 @@ def setup(classification_col,
         with gr.Row():
             # Inputs, Patient data, and Reference data
             with gr.Column():
-                curr_patient_df = gr.Dataframe(max_rows=1)
+                curr_patient_df = gr.Dataframe()
                 notes_txt = gr.Textbox(label="Notes", 
                            max_lines=4, 
                            placeholder="No notes attached")
@@ -83,7 +85,6 @@ def setup(classification_col,
                                   output_label]) \
                   .then(swap_to_patient_view, 
                         outputs=[patient_col, classification_col])
-        
 
 def get_reference_id_imgs(df):
     """
@@ -119,7 +120,7 @@ def update_sel_img(imgs, evt: gr.SelectData):
     """
     return imgs[evt.index]['name']
 
-def classify(img_path):
+def classify(img_path, progress=gr.Progress()):
     """
     Classifies the given image
 
@@ -130,7 +131,6 @@ def classify(img_path):
     PIL.Image: The attribution image to display
     dict: The labels and their respective confidence intervals
     """
-    log.info("Classifying image")
 
     if img_path is None:
         raise gr.Error("Please select an image to classify")
@@ -138,16 +138,8 @@ def classify(img_path):
         gr.Info("Classifiying image...")
         log.info("Classifiying image...")
 
-    # TODO, REPLACE WITH CLASSIFICATION, only show top 3
-    labels = {
-        'Melanocytic nevi': 0.85,
-        'dermatofibroma': 0.27,
-        'Benign keratosis-like lesions': 0.12,
-        'Basal cell carcinoma': 0.03,
-        'Actinic keratoses': 0.002,
-        'Vascular lesions': 0.001,
-        'Dermatofibroma': 0.0001
-    }
+        labels = {entry['label']: entry['score'] for entry in progress.tqdm(pipe(img_path), 
+                                                                            desc="Classifying image...")}
 
     return Image.open(img_path), labels
 
