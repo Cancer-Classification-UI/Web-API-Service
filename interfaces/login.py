@@ -121,7 +121,7 @@ def send_login_request(user, passw):
     # Get the login api address from env
     address = os.getenv("LOGIN_API_ADDRESS")
     if address is None:
-        print("WARNING: LOGIN_API_ADDRESS not specified in env, defaulting to 127.0.0.1:8084")
+        log.warning("LOGIN_API_ADDRESS not specified in env, defaulting to 127.0.0.1:8084")
         address = '127.0.0.1:8084'
 
     if (address == 'None'):

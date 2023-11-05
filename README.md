@@ -28,6 +28,8 @@ vim .env
 ```
 APP_PORT=8082 // Standard port for this microservice
 LOG_LEVEL=DEBUG
+LOGIN-API=127.0.0.1:8084
+CDN-API=127.0.0.1:8086
 ```
 > Additional fields will also be required in the `.env` file to run the microservice successfully. Here is a basic template of the `.env`. Customize to your liking. This template will change as the microservice matures and implements new features.
 

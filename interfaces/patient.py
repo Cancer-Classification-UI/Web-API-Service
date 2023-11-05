@@ -1,9 +1,11 @@
 import logging
+import os
 import gradio as gr
 import pandas as pd
+import requests
 
 log = logging.getLogger('web-api')
-column_names = ["Name", "Reference ID", "Samples", "Date"]
+column_names = ["Reference ID", "Name", "Patient ID", "Samples", "Date"]
 
 def setup(patient_col, 
           current_user, 
@@ -66,14 +68,14 @@ def setup(patient_col,
             patient_data_df = gr.Dataframe(
                 headers=column_names,
                 datatype=["str", "number", "number", "date"],
-                col_count=(4, "fixed"),
+                col_count=(5, "fixed"),
                 elem_id="tablerowfix",
                 interactive=False
             )
 
         # Workaround for automatic stateful change (States dont have eventlistenrs)
         # Event Handlers
-        patient_refresh_flag.change(get_patient_data, 
+        patient_refresh_flag.change(get_patient_list, 
                                inputs=current_user, 
                                outputs=[patient_data_df, backup_df])
         
@@ -81,7 +83,7 @@ def setup(patient_col,
                                     inputs=current_user,
                                     outputs=doctor_name_md)
 
-        refresh_btn.click(get_patient_data, 
+        refresh_btn.click(get_patient_list, 
                           inputs=current_user, 
                           outputs=[patient_data_df, backup_df])
 
@@ -145,9 +147,9 @@ def update_doctor_name(name):
     return gr.Markdown.update(value="<h3 style=\"text-align: right; margin-bottom:0px;\">Profile: " + name + "</h3>")
 
 
-def get_patient_data(doctor_name):
+def get_patient_list(doctor_name):
     """
-    Get patient data from server
+    Get patient list from server
 
     Parameters:
     doctor_name (str): The name of the doctor to get patient data for
@@ -156,31 +158,52 @@ def get_patient_data(doctor_name):
     pd.DataFrame: The patient data (twice)
     """
 
-    # Get patients from server
-    # Include some data about doctor, so we only get data for the logged in doctor
-    # patients = requests.get("http://localhost:8085/patients").json()
     log.debug("Getting patient data for doctor: " + doctor_name)
 
-    raw_json = {"Name":{"0":"John Doe","1":"Jane Doe","2":"Greg Smith","3":"Alice Smith","4":"John Johnson","5":"Jane Johnson","6":"Thomas Williams","7":"Nicole Williams","8":"John Brown","9":"Jane Brown","10":"Adam Jones","11":"Keith Jones","12":"Ian Miller","13":"Jane Miller","14":"John Davis","15":"Jane Davis","16":"John Garcia","17":"Jane Garcia","18":"John Rodriguez"},"Reference ID":{"0":1000,"1":1001,"2":1002,"3":1003,"4":1004,"5":1005,"6":1006,"7":1007,"8":1008,"9":1009,"10":1010,"11":1011,"12":1012,"13":1013,"14":1014,"15":1015,"16":1016,"17":1017,"18":1018},"Samples":{"0":1,"1":2,"2":3,"3":4,"4":5,"5":6,"6":7,"7":8,"8":9,"9":10,"10":11,"11":12,"12":13,"13":14,"14":15,"15":16,"16":17,"17":18,"18":19},"Date":{"0":"2021-01-01","1":"2021-01-01","2":"2021-01-01","3":"2021-01-01","4":"2021-01-01","5":"2021-01-01","6":"2021-01-01","7":"2021-01-01","8":"2021-01-01","9":"2021-01-01","10":"2021-01-01","11":"2021-01-01","12":"2021-01-01","13":"2021-01-01","14":"2021-01-01","15":"2021-01-01","16":"2021-01-01","17":"2021-01-01","18":"2021-01-01"}}
+    # Get the cdn api address from env
+    address = os.getenv("CDN_API_ADDRESS")
+    if address is None:
+        log.warning("CDN_API_ADDRESS not specified in env, defaulting to 127.0.0.1:8086")
+        address = '127.0.0.1:8086'
 
-    patients_df = pd.DataFrame(raw_json)
+    if (address == 'None'):
+        log.warning("Bypassing CDN API")
+        data = {"Reference ID":{"0":1000,"1":1001,"2":1002,"3":1003,"4":1004,"5":1005,"6":1006,"7":1007,"8":1008,"9":1009,"10":1010,"11":1011,"12":1012,"13":1013,"14":1014,"15":1015,"16":1016,"17":1017,"18":1018},
+                "Name":{"0":"John Doe","1":"Jane Doe","2":"Greg Smith","3":"Alice Smith","4":"John Johnson","5":"Jane Johnson","6":"Thomas Williams","7":"Nicole Williams","8":"John Brown","9":"Jane Brown","10":"Adam Jones","11":"Keith Jones","12":"Ian Miller","13":"Jane Miller","14":"John Davis","15":"Jane Davis","16":"John Garcia","17":"Jane Garcia","18":"John Rodriguez"},
+                "Patient ID":{"0":1000,"1":1001,"2":1002,"3":1003,"4":1004,"5":1005,"6":1006,"7":1007,"8":1008,"9":1009,"10":1010,"11":1011,"12":1012,"13":1013,"14":1014,"15":1015,"16":1016,"17":1017,"18":1018},
+                "Samples":{"0":1,"1":2,"2":3,"3":4,"4":5,"5":6,"6":7,"7":8,"8":9,"9":10,"10":11,"11":12,"12":13,"13":14,"14":15,"15":16,"16":17,"17":18,"18":19},
+                "Date":{"0":"2021-01-01","1":"2021-01-01","2":"2021-01-01","3":"2021-01-01","4":"2021-01-01","5":"2021-01-01","6":"2021-01-01","7":"2021-01-01","8":"2021-01-01","9":"2021-01-01","10":"2021-01-01","11":"2021-01-01","12":"2021-01-01","13":"2021-01-01","14":"2021-01-01","15":"2021-01-01","16":"2021-01-01","17":"2021-01-01","18":"2021-01-01"}}
+        patients_df = pd.DataFrame(data)
+
+    else:
+        # Send the cdn request
+        try:
+            log.debug("Sending CDN request for patient list for doctor " + str(doctor_name))
+            response = requests.get('http://' + address + '/api/v1/patient-list', 
+                                    params={'username': doctor_name})
+        except requests.exceptions.ConnectionError:
+            raise gr.Error("CDN API connection error")
+        except Exception as e:
+            raise gr.Error("CDN API error: " + str(e))
+        
+        # Extract data from response, and handle errors
+        if response.status_code == 200:
+            data = response.json().get('patients')  
+            patients_df = pd.DataFrame(data)
+            column_mapping = {
+                'ref_id': 'Reference ID',
+                'name': 'Name',
+                'patient_id': 'Patient ID',
+                'samples': 'Samples',
+                'date': 'Date'
+            }
+            patients_df.rename(columns=column_mapping, inplace=True)
+
+        else: # TODO Add more error handling
+            raise gr.Error("CDN API response not ok: " + str(response))
+
     patients_df = patients_df.astype(str)
     return patients_df, patients_df
-
-def get_reference_id_notes(reference_id):
-    """
-    Gets the notes for a specific reference id from the CDN service
-
-    Parameters:
-    reference_id (int): The reference id to get notes for
-
-    Returns:
-    str: The notes for the reference id
-    """
-    log.debug("Getting notes for reference id: " + str(reference_id))
-
-    # TODO REPLACE WITH CDN ENDPOINT FOR GETTING NOTES
-    return "Assistant: Karen\nUser stated that the lesion was itchy and had been growing for the past 2 months. They seeked out advice from their faimly doctor Dr.Smith. Patient does not have insurance.\nPatient was reffered by Dr. Smith. at Altair Hospital."
 
 def swap_to_classification_view(df, refresh_flag, evt: gr.SelectData):
     """
@@ -198,7 +221,7 @@ def swap_to_classification_view(df, refresh_flag, evt: gr.SelectData):
     gradio.Number: The refresh flag to update
     """
 
-    df = pd.DataFrame(df.iloc[[evt.index[0]]])
-    df['Notes'] = get_reference_id_notes(df['Reference ID'])
-
-    return gr.update(visible=False), gr.update(visible=True), df, gr.update(value=False) if refresh_flag else gr.update(value=True)
+    return gr.update(visible=False), \
+           gr.update(visible=True), \
+           pd.DataFrame(df.iloc[[evt.index[0]]]), \
+           gr.update(value=False) if refresh_flag else gr.update(value=True)

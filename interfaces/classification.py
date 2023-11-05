@@ -1,6 +1,11 @@
+import base64
+from io import BytesIO
 import logging
+import os
 import gradio as gr
 from PIL import Image
+import pandas as pd
+import requests
 import interfaces as interfaces
 from transformers import pipeline
 
@@ -58,21 +63,26 @@ def setup(classification_col,
                                         num_top_classes=3)
 
         # Setup event handlers
-        classification_refresh_flag.change(lambda df: df.loc[:, df.columns != 'Notes'], 
+
+        classification_refresh_flag.change(get_patient_data,
                                            inputs=current_patient_data_df,
-                                           outputs=curr_patient_df)
+                                           outputs=[curr_patient_df, notes_txt, reference_id_gal])
+
+        # classification_refresh_flag.change(lambda df: df.loc[:, df.columns != 'Notes'], 
+        #                                    inputs=current_patient_data_df,
+        #                                    outputs=curr_patient_df)
         
-        classification_refresh_flag.change(lambda df: df['Notes'][0], 
-                                    inputs=current_patient_data_df,
-                                    outputs=notes_txt)
+        # classification_refresh_flag.change(lambda df: df['Notes'][0], 
+        #                             inputs=current_patient_data_df,
+        #                             outputs=notes_txt)
         
-        classification_refresh_flag.change(get_reference_id_imgs,
-                                           inputs=current_patient_data_df,
-                                           outputs=reference_id_gal)
+        # classification_refresh_flag.change(get_reference_id_imgs,
+        #                                    inputs=current_patient_data_df,
+        #                                    outputs=reference_id_gal)
         
         reference_id_gal.select(update_sel_img,
                                  inputs=reference_id_gal,
-                                 outputs=sel_image_path)
+                                 outputs=sel_image_path, )
         
         submit_btn.click(classify,
                          inputs=sel_image_path,
@@ -106,6 +116,64 @@ def get_reference_id_imgs(df):
               Image.open("./interfaces/resources/ISIC_0034529.jpg")]
 
     return images
+
+def get_patient_data(df):
+
+    # Send the cdn request
+    ref_id = df['Reference ID'][0]
+    patient_id = df['Patient ID'][0]
+
+    # Get the cdn api address from env
+    address = os.getenv("CDN_API_ADDRESS")
+    if address is None:
+        log.warning("CDN_API_ADDRESS not specified in env, defaulting to 127.0.0.1:8086")
+        address = '127.0.0.1:8086'
+
+    if (address == 'None'):
+        log.warning("Bypassing CDN API")
+        return pd.DataFrame([{'Patient ID': patient_id, 
+                                        'Name': df['Name'][0], 
+                                        'Sex': 'M', 
+                                        'DOB': df['Date'][0]}]), \
+               "Hello world", \
+               [Image.open("./interfaces/resources/ISIC_0034525.jpg"),
+                Image.open("./interfaces/resources/ISIC_0034526.jpg"),
+                Image.open("./interfaces/resources/ISIC_0034527.jpg"),
+                Image.open("./interfaces/resources/ISIC_0034528.jpg"),
+                Image.open("./interfaces/resources/ISIC_0034529.jpg")]
+
+    else:
+        try:
+            log.debug("Sending CDN request for patient data for ref id  " + str(ref_id))
+            response = requests.get('http://' + address + '/api/v1/patient-data', 
+                                    params={'ref_id': ref_id, 'patient_id': patient_id})
+        except requests.exceptions.ConnectionError:
+            raise gr.Error("CDN API connection error")
+        except Exception as e:
+            raise gr.Error("CDN API error: " + str(e))
+        
+        # Extract data from response, and handle errors
+        if response.status_code == 200:
+            data = response.json()
+
+            patient_df = pd.DataFrame([{'Patient ID': patient_id, 
+                                        'Name': data['name'], 
+                                        'Sex': data['sex'], 
+                                        'DOB': data['date_of_birth']}])
+            note = '\n'.join('Comment 1: ' + note for note in data['comments'])
+
+            # Samples are base64 encoded, convert list of decoded PIL images
+            images = []
+            for sample in data['samples']:
+                image_data = base64.b64decode(sample['image'])
+                images.append(Image.open(BytesIO(image_data)))
+
+        else: # TODO Add more error handling
+            raise gr.Error("CDN API response not ok: " + str(response))
+
+    patient_df = patient_df.astype(str)
+    return patient_df, note, images
+
 
 def update_sel_img(imgs, evt: gr.SelectData):
     """
